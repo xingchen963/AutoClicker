@@ -1,0 +1,44 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "AutoClicker_GUI_v20.go"
+      - ".github/workflows/build-windows.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+
+      - name: Build Windows GUI executable
+        shell: pwsh
+        run: |
+          $env:GOOS = "windows"
+          $env:GOARCH = "amd64"
+          go build -trimpath -ldflags="-s -w -H windowsgui" -o AutoClicker_GUI_v20.exe .\AutoClicker_GUI_v20.go
+          if (!(Test-Path .\AutoClicker_GUI_v20.exe)) { throw "EXE build failed" }
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: AutoClicker-v20
+          name: AutoClicker GUI v20
+          body: |
+            Windows 10/11 x64 standalone executable.
+            Built from AutoClicker_GUI_v20.go by GitHub Actions.
+          files: AutoClicker_GUI_v20.exe
+          fail_on_unmatched_files: true
+          make_latest: true
